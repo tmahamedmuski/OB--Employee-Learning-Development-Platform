@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Bell, User, Settings, LogOut, Sun, Moon, Monitor, Check, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -108,13 +108,12 @@ export default function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true} open={true}>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           <header className="h-16 border-b bg-card flex items-center justify-between px-6 shadow-elevation-low sticky top-0 z-10">
             <div className="flex items-center gap-4">
-              <SidebarTrigger />
               <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
                 MindMeld
               </h1>

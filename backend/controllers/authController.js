@@ -145,19 +145,19 @@ const uploadAvatar = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Delete old avatar if exists
-  if (user.avatarUrl) {
-    const oldPath = user.avatarUrl.replace(`${req.protocol}://${req.get('host')}/uploads/`, '');
+  // Delete old avatar if exists (only for old local files)
+  if (user.avatarUrl && !user.avatarUrl.startsWith('data:')) {
     const fs = require('fs');
     const path = require('path');
-    const oldFilePath = path.join(__dirname, '../uploads', oldPath);
+    const oldFilePath = path.join(__dirname, '../uploads', path.basename(user.avatarUrl));
     if (fs.existsSync(oldFilePath)) {
-      fs.unlinkSync(oldFilePath);
+      try { fs.unlinkSync(oldFilePath); } catch (e) {}
     }
   }
 
-  // Save new avatar URL
-  const avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  // Save new avatar URL as base64
+  const b64 = req.file.buffer.toString('base64');
+  const avatarUrl = `data:${req.file.mimetype};base64,${b64}`;
   user.avatarUrl = avatarUrl;
   await user.save();
 
@@ -177,13 +177,13 @@ const deleteAvatar = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  if (user.avatarUrl) {
+  if (user.avatarUrl && !user.avatarUrl.startsWith('data:')) {
     const fs = require('fs');
     const path = require('path');
     const oldPath = user.avatarUrl.replace(/^https?:\/\/[^/]+/, '');
     const oldFilePath = path.join(__dirname, '../uploads', path.basename(oldPath));
     if (fs.existsSync(oldFilePath)) {
-      fs.unlinkSync(oldFilePath);
+      try { fs.unlinkSync(oldFilePath); } catch (e) {}
     }
   }
 

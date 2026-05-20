@@ -14,7 +14,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 
 const employeeItems = [
@@ -40,11 +39,9 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { unreadCount } = useMessageNotifications();
-  const collapsed = state === "collapsed";
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -58,7 +55,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
+    <Sidebar className="w-64" collapsible="none">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Learning</SidebarGroupLabel>
@@ -74,11 +71,11 @@ export function AppSidebar() {
                       activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                     >
                       <item.icon className="h-5 w-5" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                       {item.title === "Messages" && unreadCount > 0 && (
                         <Badge
                           variant="destructive"
-                          className={`absolute ${collapsed ? "top-1 right-1" : "right-2"} h-5 w-5 flex items-center justify-center p-0 text-xs`}
+                          className="absolute right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
                         >
                           {unreadCount > 9 ? "9+" : unreadCount}
                         </Badge>
@@ -106,7 +103,7 @@ export function AppSidebar() {
                         activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
                       >
                         <item.icon className="h-5 w-5" />
-                        {!collapsed && <span>{item.title}</span>}
+                        <span>{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -122,7 +119,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton onClick={() => signOut()}>
               <LogOut className="h-5 w-5" />
-              {!collapsed && <span>Sign Out</span>}
+              <span>Sign Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

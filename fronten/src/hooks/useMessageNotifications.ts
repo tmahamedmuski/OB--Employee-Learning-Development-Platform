@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import * as React from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -24,9 +25,12 @@ type Message = {
 export function useMessageNotifications() {
   const { token } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [lastChecked, setLastChecked] = useState<Date>(new Date());
-  const [seenMessageIds, setSeenMessageIds] = useState<Set<string>>(new Set());
+  
+  const lastCheckedRef = useRef<Date>(new Date());
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
+  const unreadCountRef = useRef(0);
 
   const fetchUnreadMessages = useCallback(async () => {
     if (!token) {
@@ -46,46 +50,47 @@ export function useMessageNotifications() {
         const count = messages.length;
         
         // Check if there are new messages since last check
-        if (count > unreadCount) {
+        if (count > unreadCountRef.current) {
           const newMessages = messages.filter(
             (msg) => 
-              new Date(msg.createdAt) > lastChecked && 
-              !seenMessageIds.has(msg._id)
+              new Date(msg.createdAt) > lastCheckedRef.current && 
+              !seenMessageIdsRef.current.has(msg._id)
           );
           
           if (newMessages.length > 0) {
-            // Show toast only for the most recent new message
-            const latestMessage = newMessages[newMessages.length - 1];
+            // Since backend returns messages in descending order (newest first), the first item is the most recent
+            const latestMessage = newMessages[0];
+            const senderName = latestMessage?.from?.name || "Unknown";
+            const subject = latestMessage?.subject || "No Subject";
             toast({
               title: "New Message",
-              description: `From ${latestMessage.from.name}: ${latestMessage.subject}`,
+              description: `From ${senderName}: ${subject}`,
               action: React.createElement(
                 ToastAction,
                 {
                   altText: "View message",
                   onClick: () => {
-                    window.location.href = "/messages";
+                    navigate("/messages");
                   },
                 },
                 "View"
-              ),
+              ) as any,
             });
             
             // Add new message IDs to seen set
-            const newIds = new Set(seenMessageIds);
-            newMessages.forEach(msg => newIds.add(msg._id));
-            setSeenMessageIds(newIds);
+            newMessages.forEach(msg => seenMessageIdsRef.current.add(msg._id));
           }
         }
         
+        unreadCountRef.current = count;
+        lastCheckedRef.current = new Date();
         setUnreadCount(count);
-        setLastChecked(new Date());
       }
     } catch (error) {
       // Silently fail - don't show error for background polling
       console.error("Failed to fetch unread messages:", error);
     }
-  }, [token, unreadCount, lastChecked, toast, seenMessageIds]);
+  }, [token, toast]); // Removed unreadCount, lastChecked, seenMessageIds from dependencies
 
   useEffect(() => {
     if (!token) return;
